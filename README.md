@@ -41,15 +41,35 @@ que roda o instalador automaticamente ao abrir uma sessão **neste** repositóri
 os comandos ficam ativos sem esforço manual.
 
 ### 3. Web, em QUALQUER repo — via setup script do ambiente
-Para que valham em **qualquer** repositório na web (não só neste), configure o
-comando abaixo como *setup script* do seu ambiente Claude Code na web
-(Configurações do ambiente → script de inicialização). Assim ele roda no start de
-toda sessão, em todo repo:
+Para que valham em **qualquer** repositório na web (não só neste), cole o script
+abaixo no campo **Setup script** do seu ambiente Claude Code na web. Ele roda como
+root antes do Claude iniciar, clona este repo público (branch com os comandos) e
+instala em `~/.claude/commands/turmcode/`. Depois o filesystem é *snapshotado*, então
+os comandos ficam disponíveis em toda sessão e todo repo daquele ambiente.
+
 ```bash
-# no setup script do ambiente, apontando para um clone deste repo:
-bash /caminho/para/este-repo/.claude/install-turmcode-commands.sh
+#!/bin/bash
+# TurmCode — instala os 47 slash commands em nivel usuario (qualquer repo)
+set +e
+REPO="https://github.com/caroltenf-png/NOTEBOOK-LM.git"
+BRANCH="claude/verificacao-configuracao-l6qvyt"   # trocar p/ a branch default apos merge
+TMP="$(mktemp -d)"
+git clone --depth 1 --branch "$BRANCH" "$REPO" "$TMP/nlm" 2>/dev/null
+if [ -d "$TMP/nlm/.claude/commands/turmcode" ]; then
+  mkdir -p "$HOME/.claude/commands/turmcode"
+  cp -f "$TMP/nlm/.claude/commands/turmcode/"*.md "$HOME/.claude/commands/turmcode/"
+  echo "[turmcode] $(ls "$HOME"/.claude/commands/turmcode/*.md | wc -l) comandos instalados"
+fi
+rm -rf "$TMP"
+true   # nunca falha o start da sessao
 ```
-Docs: https://code.claude.com/docs/en/claude-code-on-the-web
+
+Onde configurar (UI): clique no **ícone de nuvem** com o nome do ambiente atual →
+passe o mouse sobre o ambiente → clique no **ícone de engrenagem** → cole no campo
+**Setup script** → salve. (Não há página separada de "Environments".)
+Requer **Network access = Trusted** (padrão), que já permite o GitHub.
+Após dar merge dos comandos na branch default, troque `BRANCH` acima e o clone fica
+ainda mais simples. Docs: https://code.claude.com/docs/en/claude-code-on-the-web#setup-scripts
 
 ## Estrutura
 
