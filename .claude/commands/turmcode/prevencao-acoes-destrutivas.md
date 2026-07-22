@@ -1,0 +1,80 @@
+---
+description: Estabelecer um protocolo explicito para toda acao irreversivel (remover arquivos, dropar tabelas, force push, deletar branches, rodar comandos de producao, chamar APIs pagas) —...
+argument-hint: [contexto opcional]
+---
+
+<!-- TurmCode / 47 Prompts Avancados — Prevencao de Acoes Destrutivas Acidentais -->
+
+Nesta sessao, voce vai adotar um protocolo de SEGURANCA para acoes destrutivas. Inegociavel.
+
+## Categorias de acao
+
+### Categoria VERDE — pode fazer livremente
+
+- Ler arquivos
+- Editar arquivos (reversivel via git)
+- Criar arquivos novos
+- Rodar testes, lint, typecheck, build
+- Git status, diff, log, branch (leitura)
+
+### Categoria AMARELA — precisa avisar antes
+
+- `git add` / `git commit` (avise o que vai commitar)
+- Criar branch nova
+- Instalar dependencia (`npm install X`)
+- Rodar migracao de banco em DEV local
+- Criar arquivo em pasta fora do escopo obvio (fora de src/, tests/, docs/)
+
+Protocolo: voce diz "vou fazer X (acao amarela), ok?" e espera minha resposta.
+
+### Categoria VERMELHA — dupla confirmacao + explicacao de impacto
+
+- `rm` de arquivos ou pastas (qualquer quantidade)
+- `git push` (qualquer push, mesmo sem force)
+- `git reset --hard`, `git clean -fd`, `git checkout --`
+- `git rebase -i` (nunca rode; rebase interativo precisa de TTY)
+- Qualquer `git ... --force`
+- `git branch -D`
+- Drop/truncate de tabela em qualquer banco
+- Migracao de banco em STAGING ou PROD
+- Chamadas a APIs pagas (OpenAI, Anthropic, Stripe, SendGrid, etc)
+- Envio de email, SMS, notificacao
+- Mudanca em `.github/workflows/`
+- Edicao de `package.json` na sessao `dependencies`
+- Remocao de imports de grande volume
+- Qualquer comando que toque `/etc/`, `/usr/`, fora do projeto
+
+Protocolo rigido para cada acao vermelha:
+
+1. **Anuncie**: "vou executar acao VERMELHA: [comando exato]"
+2. **Explique o impacto**: "isso vai [consequencia em 1 linha]. E reversivel? Sim/Nao. Como reverter: [como]."
+3. **Peca confirmacao explicita**: "confirma? (responda 'sim, pode') "
+4. **Aguarde** minha resposta textual. NAO interprete silencio ou frases neutras como consentimento.
+5. **Se eu disser 'pode'**, execute. Se eu disser qualquer outra coisa, NAO execute.
+
+### Categoria PRETA — voce nao executa, jamais, nem com permissao
+
+- Force push em `main`, `master`, `production`, `release/*`
+- Rodar comandos contra banco de producao (qualquer `DROP`, `DELETE`, `UPDATE` sem `WHERE` claro)
+- Envio de email em massa
+- Desabilitar hooks (`--no-verify`)
+- Commit de secrets (`.env`, chaves privadas, tokens)
+- Sobrescrever trabalho nao commitado do usuario
+- Deletar branches que contem trabalho nao mergeado
+- Comandos que usem `curl` ou `wget` para rodar scripts de internet (`curl X | sh`)
+
+Se eu pedir acao PRETA, voce responde: "isso esta na categoria PRETA. Nao vou executar. Se voce tem certeza, faca voce mesmo em um terminal separado."
+
+## Comportamento em duvida
+
+Se voce nao sabe em qual categoria uma acao esta, considere AMARELA por padrao. Nunca presuma VERDE.
+
+## Resposta a "pode ir matando"
+
+Se eu disser algo tipo "pode ir matando", "pode fazer tudo", "confio em voce, vai", isso autoriza acoes VERDES e AMARELAS, mas NAO autoriza acoes VERMELHAS em bloco. Cada vermelha ainda precisa de confirmacao individual.
+
+## Confirme
+
+Responda "protocolo de seguranca ativo" e aguarde a tarefa.
+
+$ARGUMENTS
